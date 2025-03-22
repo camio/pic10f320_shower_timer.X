@@ -16,30 +16,6 @@ PROCESSOR 10F320
 
 #include <xc.inc>
 
-; Reset vector
-PSECT resetVec,class=CODE
-resetVec:
-    goto    main
-
-; Caller-saved function local variables
-PSECT udata
-X:
-    DS 1   
-Y:
-    DS 1   
-Z:
-    DS 1
-    
-PSECT udata
-counter:
-    DS 1
-
-digit:
-    DS 1
-
-shiftRegister:
-    DS 2
-
 #define LAT_SER   LATA0
 #define LAT_RCLK  LATA1
 #define LAT_SRCLK LATA2
@@ -83,9 +59,97 @@ shiftRegister:
 #define SSDH_X1 (1<<5)
 #define SSDH_X2 (1<<6)   
 #define SSDH_X3 (1<<7)
+  
+; Reset vector
+PSECT resetVec,class=CODE
+resetVec:
+    goto    main
+
+; Caller-saved function local variables
+PSECT udata
+X:
+    DS 1   
+Y:
+    DS 1   
+Z:
+    DS 1
+    
+PSECT udata
+counter:
+    DS 1
+
+number:
+    DS 2
+
+shiftRegister:
+    DS 2
+
+display_buffer:
+    DS 4
     
 PSECT code
+
  
+// Draws, on the display_buffer, the 16-bit hex number pointed to by W 
+drawHex16:
+    MOVWF FSR
+
+    SWAPF INDF,W
+    ANDLW 0x0F
+    CALL chr
+    MOVWF display_buffer
+    
+    MOVF INDF,W
+    ANDLW 0x0F
+    CALL chr
+    MOVWF display_buffer+1
+
+    INCF FSR,F
+    
+    SWAPF INDF,W
+    ANDLW 0x0F
+    CALL chr
+    MOVWF display_buffer+2
+    
+    MOVF INDF,W
+    ANDLW 0x0F
+    CALL chr
+    MOVWF display_buffer+3
+    
+    RETURN
+
+// Render one frame to the display of `display_buffer`
+refresh:
+    MOVLW SSDH_D1
+    MOVWF shiftRegister    
+    MOVF display_buffer,W
+    MOVWF shiftRegister+1
+    MOVLW shiftRegister
+    CALL setOutput
+    
+    MOVLW SSDH_D2
+    MOVWF shiftRegister    
+    MOVF display_buffer+1,W
+    MOVWF shiftRegister+1
+    MOVLW shiftRegister
+    CALL setOutput
+    
+    MOVLW SSDH_D3
+    MOVWF shiftRegister    
+    MOVF display_buffer+2,W
+    MOVWF shiftRegister+1
+    MOVLW shiftRegister
+    CALL setOutput
+    
+    MOVLW SSDH_D4
+    MOVWF shiftRegister    
+    MOVF display_buffer+3,W
+    MOVWF shiftRegister+1
+    MOVLW shiftRegister
+    CALL setOutput
+    
+    RETURN
+    
 delay:
     BTFSS TMR0IF
     GOTO delay
@@ -149,9 +213,9 @@ setOutput_for_each_bit:
 
 PSECT code
 main:
-    BCF IRCF0 ; Set frequency to 31 kHz
-    BCF IRCF1
-    BCF IRCF2
+    ;BCF IRCF0 ; Set frequency to 31 kHz
+    ;BCF IRCF1
+    ;BCF IRCF2
         
     BCF T0CS   ; Enable timer 0
     BCF TMR0IE ; Disable timer 0 interrupt
@@ -165,81 +229,16 @@ main:
     BCF TRIS_RCLK
     BCF TRIS_SRCLK
 
-    CLRF digit
+    MOVLW 0xFA
+    MOVWF number
+    MOVLW 0xCE
+    MOVWF number+1
+    
+    MOVLW number
+    CALL drawHex16
+    
 loop:
-    MOVLW 0x10
-    XORWF digit,W
-    BTFSC ZERO
-    GOTO end_loop
-
-    MOVLW SSDH_D4
-    MOVWF shiftRegister
-    MOVF digit,W
-    CALL chr
-    MOVWF shiftRegister+1
-    MOVLW shiftRegister
-    CALL setOutput
-    
-    CALL delay
-    
-    INCF digit,F
+    CALL refresh
     GOTO loop
-end_loop:
-    GOTO main
-    
-/*    
-    ; Set shift register to 0x0FFF
-    MOVLW SSDH_D4
-    MOVWF shiftRegister
-    MOVLW SSDL_A | SSDL_B | SSDL_C
-    MOVWF shiftRegister+1   
-    MOVLW shiftRegister
-    CALL setOutput
-
-loop:
-    MOVLW SSDH_D1
-    MOVWF shiftRegister
-    MOVLW SSDL_CH_A
-    MOVWF shiftRegister+1   
-    MOVLW shiftRegister
-    CALL setOutput
-    
-    MOVLW SSDH_D2
-    MOVWF shiftRegister
-    MOVLW SSDL_CH_D
-    MOVWF shiftRegister+1   
-    MOVLW shiftRegister
-    CALL setOutput
-        
-    MOVLW SSDH_D3
-    MOVWF shiftRegister
-    MOVLW SSDL_CH_B
-    MOVWF shiftRegister+1   
-    MOVLW shiftRegister
-    CALL setOutput
-    
-    MOVLW SSDH_D4
-    MOVWF shiftRegister
-    MOVLW SSDL_CH_E
-    MOVWF shiftRegister+1   
-    MOVLW shiftRegister
-    CALL setOutput
-
-    
-    GOTO loop
-*/    
-    
-;    CLRF counter
-;loop:
-;    BTFSS TMR0IF
-;    GOTO loop
-;    BCF TMR0IF
- 
-;    ; call setOutput with counter
-;    MOVF counter,W
-;    CALL setOutput
-    
-;    INCF counter, F
-;    GOTO loop
     
 END resetVec
