@@ -1158,11 +1158,12 @@
         <property key="summary-sha256" value="false"/>
         <property key="summary-xml" value="false"/>
         <property key="summary-xmlfull" value="false"/>
+        <appendMe value="-mcallgraph=full"/>
       </pic-as-global>
       <pic-as-linker>
         <property key="linker-callgraph" value="std"/>
         <property key="linker-checksum" value=""/>
-        <property key="linker-custom-options" value="-presetVec=0h"/>
+        <property key="linker-custom-options" value="-presetVec=0h;-pudata=RAM"/>
         <property key="linker-fill" value=""/>
         <property key="linker-format-hex-file-for-download" value="false"/>
         <property key="linker-libraries" value=""/>

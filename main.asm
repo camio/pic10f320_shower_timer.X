@@ -15,17 +15,14 @@ PROCESSOR 10F320
   CONFIG  WRT = OFF             ; Flash Memory Self-Write Protection (Write protection off)
 
 #include <xc.inc>
-
 #include "hardware.inc"
-  
 
+FNCONF udata,?au_,?pa_
   
 ; Reset vector
 PSECT resetVec,class=CODE
 resetVec:
     goto    main
-
-
     
 PSECT udata
 counter:
@@ -43,6 +40,8 @@ delay:
     RETURN
 
 PSECT code
+FNROOT main
+FNCALL main,hardware_refresh
 main:
     ;BCF IRCF0 ; Set frequency to 31 kHz
     ;BCF IRCF1

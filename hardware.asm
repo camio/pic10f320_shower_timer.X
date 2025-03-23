@@ -49,24 +49,14 @@ PROCESSOR 10F320
 GLOBAL hardware_refresh
 GLOBAL hardware_drawHex16
 GLOBAL hardware_initialize
-    
-; Caller-saved function local variables
-PSECT udata
-X:
-    DS 1   
-Y:
-    DS 1   
-Z:
-    DS 1
-    
+
 PSECT udata
 
-shiftRegister:
-    DS 2
-
+GLOBAL display_buffer
 display_buffer:
     DS 4
 
+GLOBAL next_digit
 next_digit:
     DS 1
 
@@ -107,21 +97,26 @@ ssdh_from_digit:
     RETLW SSDH_D2
     RETLW SSDH_D3
     RETLW SSDH_D4
-    
+
 // Render one frame to the display of `display_buffer`. A single frame
 // corresponds to a single digit. This function, when called repeatedly, will
 // strobe between the different digits.
+FNSIZE hardware_refresh,2,0
+GLOBAL ?au_hardware_refresh
+hardware_refresh_shiftRegisterHigh EQU ?au_hardware_refresh
+hardware_refresh_shiftRegisterLow EQU ?au_hardware_refresh+1
+FNCALL hardware_refresh,setOutput
 hardware_refresh:
     MOVF next_digit, W
     CALL ssdh_from_digit
-    MOVWF shiftRegister  
+    MOVWF hardware_refresh_shiftRegisterHigh
     MOVLW display_buffer
     ADDWF next_digit,W
     MOVWF FSR
     MOVF INDF, W
-    MOVWF shiftRegister+1
+    MOVWF hardware_refresh_shiftRegisterLow
     
-    MOVLW shiftRegister
+    MOVLW hardware_refresh_shiftRegisterHigh
     CALL setOutput
     
 
@@ -193,32 +188,37 @@ chr:
     RETLW SSDL_CH_F
 
 ; Sets the shift register's value to the two-byte word pointed to by W
+FNSIZE setOutput,3,0
+GLOBAL ?au_setOutput
+setOutput_x EQU ?au_setOutput+0
+setOutput_bit EQU ?au_setOutput+1
+setOutput_bank EQU ?au_setOutput+2
 setOutput:
     MOVWF FSR   ; X=*W
     MOVF INDF,W
-    MOVWF X
+    MOVWF setOutput_x
         
     MOVLW 0x02 ; bank(Z)=0x02
-    MOVWF Z
+    MOVWF setOutput_bank
     
 setOutput_for_each_bank:
     MOVLW 0x08 ; bit(Y)=0x08
-    MOVWF Y
+    MOVWF setOutput_bit
 setOutput_for_each_bit:    
     BSF LAT_SER
-    RLF X,F
+    RLF setOutput_x,F
     BTFSS CARRY
     BCF LAT_SER
     BSF LAT_SRCLK ; Tick SRCLK
     BCF LAT_SRCLK
-    DECFSZ Y,F
+    DECFSZ setOutput_bit,F
     GOTO setOutput_for_each_bit
 
     INCF FSR    ; X=*(W+1)
     MOVF INDF,W
-    MOVWF X
+    MOVWF setOutput_x
     
-    DECFSZ Z,F
+    DECFSZ setOutput_bank,F
     GOTO setOutput_for_each_bank
     
     BSF LAT_RCLK ; Tick RCLK
