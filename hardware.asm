@@ -101,24 +101,18 @@ ssdh_from_digit:
 // Render one frame to the display of `display_buffer`. A single frame
 // corresponds to a single digit. This function, when called repeatedly, will
 // strobe between the different digits.
-FNSIZE hardware_refresh,2,0
-GLOBAL ?au_hardware_refresh
-hardware_refresh_shiftRegisterHigh EQU ?au_hardware_refresh
-hardware_refresh_shiftRegisterLow EQU ?au_hardware_refresh+1
 FNCALL hardware_refresh,setOutput
 hardware_refresh:
     MOVF next_digit, W
     CALL ssdh_from_digit
-    MOVWF hardware_refresh_shiftRegisterHigh
+    MOVWF setOutput_valueHigh
     MOVLW display_buffer
     ADDWF next_digit,W
     MOVWF FSR
     MOVF INDF, W
-    MOVWF hardware_refresh_shiftRegisterLow
+    MOVWF setOutput_valueLow
     
-    MOVLW hardware_refresh_shiftRegisterHigh
     CALL setOutput
-    
 
     // Option 1: Fix value before decrementing the counter. Counter ranges
     // beteen 0 and 3. Uses 6 instructions.
@@ -188,17 +182,19 @@ chr:
     RETLW SSDL_CH_F
 
 ; Sets the shift register's value to the two-byte word pointed to by W
-FNSIZE setOutput,3,0
+FNSIZE setOutput,3,2
 GLOBAL ?au_setOutput
 setOutput_x EQU ?au_setOutput+0
 setOutput_bit EQU ?au_setOutput+1
 setOutput_bank EQU ?au_setOutput+2
+GLOBAL ?pa_setOutput
+setOutput_valueHigh EQU ?pa_setOutput+0
+setOutput_valueLow EQU ?pa_setOutput+1
 setOutput:
-    MOVWF FSR   ; X=*W
-    MOVF INDF,W
+    MOVF setOutput_valueHigh,W
     MOVWF setOutput_x
         
-    MOVLW 0x02 ; bank(Z)=0x02
+    MOVLW 0x02 ; bank=0x02
     MOVWF setOutput_bank
     
 setOutput_for_each_bank:
@@ -214,8 +210,7 @@ setOutput_for_each_bit:
     DECFSZ setOutput_bit,F
     GOTO setOutput_for_each_bit
 
-    INCF FSR    ; X=*(W+1)
-    MOVF INDF,W
+    MOVF setOutput_valueLow,W
     MOVWF setOutput_x
     
     DECFSZ setOutput_bank,F
