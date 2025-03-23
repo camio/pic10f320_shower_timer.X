@@ -94,7 +94,7 @@ PSECT code
 
  
 // Draws, on the display_buffer, the 16-bit hex number pointed to by W 
-drawHex16:
+hardware_drawHex16:
     MOVWF FSR
 
     SWAPF INDF,W
@@ -133,7 +133,7 @@ ssdh_from_digit:
 // Render one frame to the display of `display_buffer`. A single frame
 // corresponds to a single digit. This function, when called repeatedly, will
 // strobe between the different digits.
-refresh:
+hardware_refresh:
     // DECF next_digit, W
     MOVF next_digit, W
     CALL ssdh_from_digit
@@ -256,6 +256,13 @@ setOutput_for_each_bit:
     
     RETURN
 
+hardware_initialize:
+    BCF TRIS_SER ; Set RA's 0-2 to output mode
+    BCF TRIS_RCLK
+    BCF TRIS_SRCLK    
+    CLRF next_digit
+    RETURN
+
 PSECT code
 main:
     ;BCF IRCF0 ; Set frequency to 31 kHz
@@ -270,11 +277,7 @@ main:
     BCF PSA    ; Enable prescaler
     CLRF TMR0  ; clear the timer
     
-    BCF TRIS_SER ; Set RA's 0-2 to output mode
-    BCF TRIS_RCLK
-    BCF TRIS_SRCLK
-    
-    CLRF next_digit
+    CALL hardware_initialize
 
     MOVLW 0xFA
     MOVWF number
@@ -282,10 +285,10 @@ main:
     MOVWF number+1
     
     MOVLW number
-    CALL drawHex16
+    CALL hardware_drawHex16
     
 loop:
-    CALL refresh
+    CALL hardware_refresh
     GOTO loop
     
 END resetVec
