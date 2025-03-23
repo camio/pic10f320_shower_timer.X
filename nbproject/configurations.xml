@@ -1163,7 +1163,8 @@
       <pic-as-linker>
         <property key="linker-callgraph" value="std"/>
         <property key="linker-checksum" value=""/>
-        <property key="linker-custom-options" value="-presetVec=0h;-pudata=RAM"/>
+        <property key="linker-custom-options"
+                  value="-presetVec=0h;-pudata=RAM;-pudata_bank0=BANK0"/>
         <property key="linker-fill" value=""/>
         <property key="linker-format-hex-file-for-download" value="false"/>
         <property key="linker-libraries" value=""/>
