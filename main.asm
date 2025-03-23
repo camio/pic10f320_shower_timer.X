@@ -134,13 +134,11 @@ ssdh_from_digit:
 // corresponds to a single digit. This function, when called repeatedly, will
 // strobe between the different digits.
 hardware_refresh:
-    // DECF next_digit, W
     MOVF next_digit, W
     CALL ssdh_from_digit
     MOVWF shiftRegister  
     MOVLW display_buffer
     ADDWF next_digit,W
-    // ADDLW -1
     MOVWF FSR
     MOVF INDF, W
     MOVWF shiftRegister+1
