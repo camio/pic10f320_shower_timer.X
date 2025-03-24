@@ -27,17 +27,8 @@ resetVec:
 PSECT udata
 counter:
     DS 1
-
 number:
     DS 2
-
-PSECT code
-
-delay:
-    BTFSS TMR0IF
-    GOTO delay
-    BCF TMR0IF
-    RETURN
 
 PSECT code
 FNROOT main
