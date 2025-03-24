@@ -37,14 +37,14 @@ PROCESSOR 10F320
 #define SSDL_CH_E SSDL_A | SSDL_D | SSDL_E | SSDL_F | SSDL_G
 #define SSDL_CH_F SSDL_A | SSDL_E | SSDL_F | SSDL_G
 
-#define SSDH_D1 1
-#define SSDH_D2 (1<<1)
-#define SSDH_D3 (1<<2)
-#define SSDH_D4 (1<<3)
+#define SSDH_D0 1
+#define SSDH_D1 (1<<1)
+#define SSDH_D2 (1<<2)
+#define SSDH_D3 (1<<3)
 #define SSDH_BUZZER (1<<4)
-#define SSDH_X1 (1<<5)
-#define SSDH_X2 (1<<6)   
-#define SSDH_X3 (1<<7)
+#define SSDH_X0 (1<<5)
+#define SSDH_X1 (1<<6)
+#define SSDH_X2 (1<<7)
 
 GLOBAL hardware_refresh
 GLOBAL hardware_drawHex16
@@ -94,10 +94,10 @@ hardware_drawHex16:
 // (0 counted)
 ssdh_from_digit:
     ADDWF PCL,F
-    RETLW SSDH_D1 ; TODO: rename these starting with 0
+    RETLW SSDH_D0
+    RETLW SSDH_D1
     RETLW SSDH_D2
     RETLW SSDH_D3
-    RETLW SSDH_D4
 
 // Render one frame to the display of `display_buffer`. A single frame
 // corresponds to a single digit. This function, when called repeatedly, will
