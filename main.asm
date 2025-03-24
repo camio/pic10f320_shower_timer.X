@@ -41,7 +41,6 @@ delay:
 
 PSECT code
 FNROOT main
-FNCALL main,hardware_refresh
 main:
     ;BCF IRCF0 ; Set frequency to 31 kHz
     ;BCF IRCF1
@@ -55,6 +54,7 @@ main:
     BCF PSA    ; Enable prescaler
     CLRF TMR0  ; clear the timer
     
+    FNCALL main,hardware_initialize
     CALL hardware_initialize
 
     MOVLW 0x00
@@ -63,6 +63,7 @@ main:
     MOVWF number+1
     
     MOVLW number
+    FNCALL main,hardware_drawHex16
     CALL hardware_drawHex16
     
 loop:
@@ -75,8 +76,10 @@ tick:
     BTFSC ZERO
     INCF number,F
     MOVLW number
+    FNCALL main,hardware_drawHex16
     CALL hardware_drawHex16
 endtick:
+    FNCALL main,hardware_refresh
     CALL hardware_refresh
     GOTO loop
     

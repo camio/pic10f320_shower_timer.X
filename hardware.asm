@@ -61,6 +61,7 @@ next_digit:
     DS 1
 
 PSECT code
+
 // Draws, on the display_buffer, the 16-bit hex number pointed to by W 
 hardware_drawHex16:
     MOVWF FSR
@@ -101,7 +102,6 @@ ssdh_from_digit:
 // Render one frame to the display of `display_buffer`. A single frame
 // corresponds to a single digit. This function, when called repeatedly, will
 // strobe between the different digits.
-FNCALL hardware_refresh,setOutput
 hardware_refresh:
     MOVF next_digit, W
     CALL ssdh_from_digit
@@ -112,6 +112,7 @@ hardware_refresh:
     MOVF INDF, W
     MOVWF setOutput_valueLow
     
+    FNCALL hardware_refresh,setOutput
     CALL setOutput
 
     // Option 1: Fix value before decrementing the counter. Counter ranges
