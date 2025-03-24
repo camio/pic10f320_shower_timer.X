@@ -18,7 +18,7 @@ PROCESSOR 10F320
 #define SSDL_F (1 << 5)
 #define SSDL_G (1 << 6)
 #define SSDL_DP (1 << 7)
-    
+
 #define SSDL_CH_0 SSDL_A | SSDL_B | SSDL_C | SSDL_D | SSDL_E | SSDL_F
 #define SSDL_CH_1 SSDL_B | SSDL_C
 #define SSDL_CH_2 SSDL_A | SSDL_B | SSDL_D | SSDL_E | SSDL_G
@@ -30,10 +30,10 @@ PROCESSOR 10F320
 #define SSDL_CH_8 SSDL_A | SSDL_B | SSDL_C | SSDL_D | SSDL_E | SSDL_F | SSDL_G
 #define SSDL_CH_9 SSDL_A | SSDL_B | SSDL_C | SSDL_F | SSDL_G
 
-#define SSDL_CH_A SSDL_A | SSDL_B | SSDL_C | SSDL_E | SSDL_F | SSDL_G    
-#define SSDL_CH_B SSDL_C | SSDL_D | SSDL_E | SSDL_F | SSDL_G  
-#define SSDL_CH_C SSDL_A | SSDL_D | SSDL_E | SSDL_F  
-#define SSDL_CH_D SSDL_B | SSDL_C | SSDL_D | SSDL_E | SSDL_G    
+#define SSDL_CH_A SSDL_A | SSDL_B | SSDL_C | SSDL_E | SSDL_F | SSDL_G
+#define SSDL_CH_B SSDL_C | SSDL_D | SSDL_E | SSDL_F | SSDL_G
+#define SSDL_CH_C SSDL_A | SSDL_D | SSDL_E | SSDL_F
+#define SSDL_CH_D SSDL_B | SSDL_C | SSDL_D | SSDL_E | SSDL_G
 #define SSDL_CH_E SSDL_A | SSDL_D | SSDL_E | SSDL_F | SSDL_G
 #define SSDL_CH_F SSDL_A | SSDL_E | SSDL_F | SSDL_G
 
@@ -69,7 +69,7 @@ next_digit:
 
 PSECT code
 
-// Draws, on the display_buffer, the 16-bit hex number pointed to by W 
+// Draws, on the display_buffer, the 16-bit hex number pointed to by W
 FNSIZE hardware_drawHex16,0,2
 GLOBAL ?pa_hardware_drawHex16
 hardware_drawHex16_valueHigh EQU ?pa_hardware_drawHex16+0
@@ -79,7 +79,7 @@ hardware_drawHex16:
     ANDLW 0x0F
     CALL chr
     MOVWF display_buffer
-    
+
     MOVF hardware_drawHex16_valueHigh,W
     ANDLW 0x0F
     CALL chr
@@ -89,12 +89,12 @@ hardware_drawHex16:
     ANDLW 0x0F
     CALL chr
     MOVWF display_buffer+2
-    
+
     MOVF hardware_drawHex16_valueLow,W
     ANDLW 0x0F
     CALL chr
     MOVWF display_buffer+3
-    
+
     RETURN
 
 // Return the high byte of the output port corresponding to the specified digit
@@ -121,20 +121,20 @@ hardware_refresh:
     MOVWF FSR
     MOVF INDF, W
     MOVWF ?pa_setOutput+1
-    
+
     FNCALL hardware_refresh,setOutput
     CALL setOutput
 
     // Option 1: Fix value before decrementing the counter. Counter ranges
     // beteen 0 and 3. Uses 6 instructions.
-     
+
     MOVF next_digit, W
     BTFSC ZERO
     MOVLW 0x04
     MOVWF  next_digit
     DECF next_digit, F
     RETURN
-    
+
     /*
     // Option 2: Fix value after decrementing the counter. Counter ranges
     // between 1 and 4. Uses 5 instructions, but requires 2 elsewhere.
@@ -144,7 +144,7 @@ hardware_refresh:
     MOVWF next_digit
     RETURN
     */
-    
+
     /*
     // Option 3: Explicitly handle base case when incrementing the counter.
     // Counter ranges between 0 and 3. Uses 8 instructions.
@@ -158,7 +158,7 @@ foo:
     CLRF next_digit
     RETURN
     */
-    
+
     /*
     // Option 4: Fix value (cleverly) after incrementing the counter. Counter
     // ranges between 0 and 3. Uses 7 instructions.
@@ -204,14 +204,14 @@ setOutput_valueLow EQU ?pa_setOutput+1
 setOutput:
     MOVF setOutput_valueHigh,W
     MOVWF setOutput_x
-        
+
     MOVLW 0x02 ; bank=0x02
     MOVWF setOutput_bank
-    
+
 setOutput_for_each_bank:
     MOVLW 0x08 ; bit(Y)=0x08
     MOVWF setOutput_bit
-setOutput_for_each_bit:    
+setOutput_for_each_bit:
     BSF LAT_SER
     RLF setOutput_x,F
     BTFSS CARRY
@@ -223,13 +223,13 @@ setOutput_for_each_bit:
 
     MOVF setOutput_valueLow,W
     MOVWF setOutput_x
-    
+
     DECFSZ setOutput_bank,F
     GOTO setOutput_for_each_bank
-    
+
     BSF LAT_RCLK ; Tick RCLK
     BCF LAT_RCLK
-    
+
     RETURN
 
 hardware_initialize:

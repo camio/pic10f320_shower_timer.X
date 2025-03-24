@@ -1,7 +1,7 @@
 ; Count on a seven segment display in HEX
 
 PROCESSOR 10F320
-    
+
 ; CONFIG
   CONFIG  FOSC = INTOSC         ; Oscillator Selection bits (INTOSC oscillator: CLKIN function disabled)
   CONFIG  BOREN = OFF           ; Brown-out Reset Enable (Brown-out Reset disabled)
@@ -18,25 +18,25 @@ PROCESSOR 10F320
 #include "hardware.inc"
 
 FNCONF udata,?au_,?pa_
-  
+
 ; Reset vector
 PSECT resetVec,class=CODE
 resetVec:
     goto    main
-    
+
 PSECT udata
 counter:
     DS 1
 
 number:
     DS 2
-    
+
 PSECT code
-    
+
 delay:
     BTFSS TMR0IF
     GOTO delay
-    BCF TMR0IF  
+    BCF TMR0IF
     RETURN
 
 PSECT code
@@ -45,7 +45,7 @@ main:
     ;BCF IRCF0 ; Set frequency to 31 kHz
     ;BCF IRCF1
     ;BCF IRCF2
-        
+
     BCF T0CS   ; Enable timer 0
     BCF TMR0IE ; Disable timer 0 interrupt
     BSF PS0    ; Set prescaler to 1:256
@@ -53,20 +53,20 @@ main:
     BSF PS2
     BCF PSA    ; Enable prescaler
     CLRF TMR0  ; clear the timer
-    
+
     FNCALL main,hardware_initialize
     CALL hardware_initialize
 
     CLRF number
     CLRF number+1
-    
+
     MOVF number,W
     MOVWF ?pa_hardware_drawHex16+0
     MOVF number+1,W
     MOVWF ?pa_hardware_drawHex16+1
     FNCALL main,hardware_drawHex16
     CALL hardware_drawHex16
-    
+
 loop:
     BTFSC TMR0IF
     GOTO tick
@@ -87,5 +87,5 @@ endtick:
     FNCALL main,hardware_refresh
     CALL hardware_refresh
     GOTO loop
-    
+
 END resetVec
