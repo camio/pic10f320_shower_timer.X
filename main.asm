@@ -57,12 +57,13 @@ main:
     FNCALL main,hardware_initialize
     CALL hardware_initialize
 
-    MOVLW 0x00
-    MOVWF number
-    MOVLW 0x00
-    MOVWF number+1
+    CLRF number
+    CLRF number+1
     
-    MOVLW number
+    MOVF number,W
+    MOVWF ?pa_hardware_drawHex16+0
+    MOVF number+1,W
+    MOVWF ?pa_hardware_drawHex16+1
     FNCALL main,hardware_drawHex16
     CALL hardware_drawHex16
     
@@ -75,7 +76,11 @@ tick:
     INCF number+1,F
     BTFSC ZERO
     INCF number,F
-    MOVLW number
+
+    MOVF number,W
+    MOVWF ?pa_hardware_drawHex16+0
+    MOVF number+1,W
+    MOVWF ?pa_hardware_drawHex16+1
     FNCALL main,hardware_drawHex16
     CALL hardware_drawHex16
 endtick:

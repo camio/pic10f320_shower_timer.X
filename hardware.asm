@@ -63,27 +63,27 @@ next_digit:
 PSECT code
 
 // Draws, on the display_buffer, the 16-bit hex number pointed to by W 
+FNSIZE hardware_drawHex16,0,2
+GLOBAL ?pa_hardware_drawHex16
+hardware_drawHex16_valueHigh EQU ?pa_hardware_drawHex16+0
+hardware_drawHex16_valueLow EQU ?pa_hardware_drawHex16+1
 hardware_drawHex16:
-    MOVWF FSR
-
-    SWAPF INDF,W
+    SWAPF hardware_drawHex16_valueHigh,W
     ANDLW 0x0F
     CALL chr
     MOVWF display_buffer
     
-    MOVF INDF,W
+    MOVF hardware_drawHex16_valueHigh,W
     ANDLW 0x0F
     CALL chr
     MOVWF display_buffer+1
 
-    INCF FSR,F
-    
-    SWAPF INDF,W
+    SWAPF hardware_drawHex16_valueLow,W
     ANDLW 0x0F
     CALL chr
     MOVWF display_buffer+2
     
-    MOVF INDF,W
+    MOVF hardware_drawHex16_valueLow,W
     ANDLW 0x0F
     CALL chr
     MOVWF display_buffer+3
