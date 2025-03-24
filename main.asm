@@ -105,6 +105,8 @@ main:
 
     FNCALL main,hardware_initialize
     CALL hardware_initialize
+    MOVLW SSDH_COLON
+    MOVWF aux_buffer
 
     CLRF time_left
     CLRF time_left+1
