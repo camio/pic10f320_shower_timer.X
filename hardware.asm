@@ -4,10 +4,6 @@ PROCESSOR 10F320
 
 #include "hardware_defs.inc"
 
-GLOBAL hardware_refresh
-GLOBAL hardware_drawHex16
-GLOBAL hardware_initialize
-
 PSECT udata
 
 GLOBAL display_buffer
@@ -28,6 +24,7 @@ next_digit:
 PSECT code
 
 // Draws, on the display_buffer, the 16-bit hex number pointed to by W
+GLOBAL hardware_drawHex16
 FNSIZE hardware_drawHex16,0,2
 GLOBAL ?pa_hardware_drawHex16
 hardware_drawHex16_valueHigh EQU ?pa_hardware_drawHex16+0
@@ -67,6 +64,7 @@ ssdh_from_digit:
 // Render one frame to the display of `display_buffer`. A single frame
 // corresponds to a single digit. This function, when called repeatedly, will
 // strobe between the different digits.
+GLOBAL hardware_refresh
 hardware_refresh:
     MOVF next_digit, W
     CALL ssdh_from_digit
@@ -190,6 +188,7 @@ setOutput_for_each_bit:
 
     RETURN
 
+GLOBAL hardware_initialize
 hardware_initialize:
     BCF TRIS_SER ; Set RA's 0-2 to output mode
     BCF TRIS_RCLK
