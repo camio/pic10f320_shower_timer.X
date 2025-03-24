@@ -224,6 +224,6 @@ setOutput_for_each_bit:
 hardware_initialize:
     BCF TRIS_SER ; Set RA's 0-2 to output mode
     BCF TRIS_RCLK
-    BCF TRIS_SRCLK    
+    BCF TRIS_SRCLK
     CLRF next_digit
     RETURN

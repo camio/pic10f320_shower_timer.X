@@ -1,4 +1,4 @@
-; Count a binary number using a shift register
+; Count on a seven segment display in HEX
 
 PROCESSOR 10F320
     
@@ -49,23 +49,34 @@ main:
         
     BCF T0CS   ; Enable timer 0
     BCF TMR0IE ; Disable timer 0 interrupt
-    BSF PS0    ; Set prescaler to 1:2
+    BSF PS0    ; Set prescaler to 1:256
     BSF PS1
-    BCF PS2
+    BSF PS2
     BCF PSA    ; Enable prescaler
     CLRF TMR0  ; clear the timer
     
     CALL hardware_initialize
 
-    MOVLW 0xFA
+    MOVLW 0x00
     MOVWF number
-    MOVLW 0xCE
+    MOVLW 0x00
     MOVWF number+1
     
     MOVLW number
     CALL hardware_drawHex16
     
 loop:
+    BTFSC TMR0IF
+    GOTO tick
+    GOTO endtick
+tick:
+    BCF TMR0IF
+    INCF number+1,F
+    BTFSC ZERO
+    INCF number,F
+    MOVLW number
+    CALL hardware_drawHex16
+endtick:
     CALL hardware_refresh
     GOTO loop
     
