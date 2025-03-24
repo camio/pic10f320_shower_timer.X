@@ -105,12 +105,12 @@ ssdh_from_digit:
 hardware_refresh:
     MOVF next_digit, W
     CALL ssdh_from_digit
-    MOVWF setOutput_valueHigh
+    MOVWF ?pa_setOutput+0
     MOVLW display_buffer
     ADDWF next_digit,W
     MOVWF FSR
     MOVF INDF, W
-    MOVWF setOutput_valueLow
+    MOVWF ?pa_setOutput+1
     
     FNCALL hardware_refresh,setOutput
     CALL setOutput
