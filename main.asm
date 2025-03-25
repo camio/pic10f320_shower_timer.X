@@ -26,6 +26,7 @@ resetVec:
     goto    main
 
 PSECT udata
+GLOBAL counter
 counter:
     DS 1
 // Amount of time left on the timer. The high-order byte is minutes in BCD and
@@ -37,14 +38,14 @@ PSECT code
 
 FNROOT main
 main:
-    ;BCF IRCF0 ; Set frequency to 31 kHz
-    ;BCF IRCF1
-    ;BCF IRCF2
+    BSF IRCF0 ; Set frequency to 4 Mhz
+    BCF IRCF1
+    BSF IRCF2
 
     BCF T0CS   ; Enable timer 0
     BCF TMR0IE ; Disable timer 0 interrupt
-    BSF PS0    ; Set prescaler to 1:256
-    BSF PS1
+    BSF PS0    ; Set prescaler to 1:64
+    BCF PS1
     BSF PS2
     BCF PSA    ; Enable prescaler
     CLRF TMR0  ; clear the timer
@@ -64,13 +65,47 @@ main:
     FNCALL main,hardware_drawHex16
     CALL hardware_drawHex16
 
+    CLRF counter
 loop:
     BTFSC TMR0IF
     GOTO tick
     GOTO endtick
 tick:
     BCF TMR0IF
+    INCF counter,F
 
+    // If counter is at 0x3D, go to last_run
+    // 4,000,000 = clock cycles per second
+    // 4,000,000/4 = 1,000,000 = instructions per second
+    // 1,000,000/64 = 15,625 = number of timer ticks per second w/ multiplier
+    // 15,555/255 = 61 = number of full timer interupts that fit within a second
+    MOVLW 61
+    XORWF counter,W
+    BTFSC ZERO
+    GOTO last_run
+
+    // If counter is at 0x3E, go to decrement_clock
+    MOVLW 0x3E
+    XORWF counter,W
+    BTFSC ZERO
+    GOTO decrement_clock
+
+    // Otherwise
+    GOTO endtick
+
+last_run:
+    // 15,625 - 15,555 = 70 = number of timer ticks required on the last run
+    // 255-70 = 185 number of timer ticks needed to adjust TMR0 to account for
+    //          the last run
+    //
+    // Note that when TMR0 is written, its increment is inhibited for two
+    // instruction cycles. This is hopefully okay because there hasn't been
+    // 64 instruction cycles since the last interrupt.
+    MOVLW 185
+    ADDWF TMR0,F
+    GOTO endtick
+
+decrement_clock:
     // time = time_mmss_dec(time)
     MOVF time_left,W
     MOVWF ?pa_time_mmss_dec+0
@@ -90,6 +125,9 @@ tick:
     MOVWF ?pa_hardware_drawHex16+1
     FNCALL main,hardware_drawHex16
     CALL hardware_drawHex16
+    CLRF counter
+    GOTO endtick
+
 endtick:
     FNCALL main,hardware_refresh
     CALL hardware_refresh
