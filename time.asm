@@ -2,6 +2,8 @@ PROCESSOR 10F320
 
 #include <xc.inc>
 
+PSECT code
+
 // Decrement the parameter by one second. The high order byte is interpreted as
 // minutes in BCD and the low order bit is interpreted as seconds in BCD.
 GLOBAL time_mmss_dec
