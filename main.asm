@@ -17,6 +17,7 @@ PROCESSOR 10F320
 #include <xc.inc>
 #include "hardware.inc"
 #include "time.inc"
+#include "timer.inc"
 
 FNCONF udata,?au_,?pa_
 
@@ -42,18 +43,27 @@ main:
     BCF IRCF1
     BSF IRCF2
 
-    BCF T0CS   ; Enable timer 0
-    BCF TMR0IE ; Disable timer 0 interrupt
     BSF PS0    ; Set prescaler to 1:64
     BCF PS1
     BSF PS2
     BCF PSA    ; Enable prescaler
-    CLRF TMR0  ; clear the timer
 
     FNCALL main,hardware_initialize
     CALL hardware_initialize
     MOVLW SSDH_COLON
     MOVWF aux_buffer
+
+    // 4,000,000 = clock cycles per second
+    // 4,000,000/4 = 1,000,000 = instructions per second
+    // 1,000,000/64 = 15,625 = 0x3D09 number of timer ticks per second w/ multiplier
+    MOVLW 0x3D
+    MOVWF ?pa_timer_initialize+0
+    MOVLW 0x09
+    MOVWF ?pa_timer_initialize+1
+    FNCALL main,timer_initialize
+    CALL timer_initialize
+
+    CALL timer_start
 
     CLRF time_left
     CLRF time_left+1
@@ -65,46 +75,12 @@ main:
     FNCALL main,hardware_drawHex16
     CALL hardware_drawHex16
 
-    CLRF counter
 loop:
-    BTFSC TMR0IF
-    GOTO tick
-    GOTO endtick
-tick:
-    BCF TMR0IF
-    INCF counter,F
-
-    // If counter is at 0x3D, go to last_run
-    // 4,000,000 = clock cycles per second
-    // 4,000,000/4 = 1,000,000 = instructions per second
-    // 1,000,000/64 = 15,625 = number of timer ticks per second w/ multiplier
-    // 15,555/255 = 61 = number of full timer interupts that fit within a second
-    MOVLW 61
-    XORWF counter,W
-    BTFSC ZERO
-    GOTO last_run
-
-    // If counter is at 0x3E, go to decrement_clock
-    MOVLW 0x3E
-    XORWF counter,W
-    BTFSC ZERO
+    CALL timer_check
+    ANDLW 0x01
+    BTFSS ZERO
     GOTO decrement_clock
-
-    // Otherwise
-    GOTO endtick
-
-last_run:
-    // 15,625 - 15,555 = 70 = number of timer ticks required on the last run
-    // 255-70 = 185 number of timer ticks needed to adjust TMR0 to account for
-    //          the last run
-    //
-    // Note that when TMR0 is written, its increment is inhibited for two
-    // instruction cycles. This is hopefully okay because there hasn't been
-    // 64 instruction cycles since the last interrupt.
-    MOVLW 185
-    ADDWF TMR0,F
-    GOTO endtick
-
+    GOTO redraw_and_loop
 decrement_clock:
     // time = time_mmss_dec(time)
     MOVF time_left,W
@@ -125,10 +101,8 @@ decrement_clock:
     MOVWF ?pa_hardware_drawHex16+1
     FNCALL main,hardware_drawHex16
     CALL hardware_drawHex16
-    CLRF counter
-    GOTO endtick
 
-endtick:
+redraw_and_loop:
     FNCALL main,hardware_refresh
     CALL hardware_refresh
     GOTO loop

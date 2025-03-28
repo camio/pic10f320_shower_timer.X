@@ -7,6 +7,7 @@
       <itemPath>hardware.inc</itemPath>
       <itemPath>hardware_defs.inc</itemPath>
       <itemPath>time.inc</itemPath>
+      <itemPath>timer.inc</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -23,6 +24,7 @@
       <itemPath>main.asm</itemPath>
       <itemPath>hardware.asm</itemPath>
       <itemPath>time.asm</itemPath>
+      <itemPath>timer.asm</itemPath>
     </logicalFolder>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
