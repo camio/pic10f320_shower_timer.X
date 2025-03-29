@@ -1,4 +1,4 @@
-; Count on a seven segment display in HEX
+; Display a count down and alarm when it reaches zero
 
 PROCESSOR 10F320
 
@@ -27,11 +27,12 @@ resetVec:
     goto    main
 
 PSECT udata
-GLOBAL counter
-counter:
+GLOBAL alarm_state
+alarm_state:
     DS 1
 // Amount of time left on the timer. The high-order byte is minutes in BCD and
 // the low-order byte is seconds in BCD
+GLOBAL time_left
 time_left:
     DS 2
 
@@ -66,7 +67,8 @@ main:
     CALL timer_start
 
     CLRF time_left
-    CLRF time_left+1
+    MOVLW 0x05
+    MOVWF time_left+1
 
     MOVF time_left,W
     MOVWF ?pa_hardware_drawHex16+0
@@ -102,9 +104,58 @@ decrement_clock:
     FNCALL main,hardware_drawHex16
     CALL hardware_drawHex16
 
+    MOVF time_left,F
+    BTFSS ZERO
+    GOTO redraw_and_loop
+    MOVF time_left+1,F
+    BTFSC ZERO
+    GOTO alarm
+
 redraw_and_loop:
     FNCALL main,hardware_refresh
     CALL hardware_refresh
     GOTO loop
+
+alarm:
+    CLRF alarm_state
+
+    // Start 0.5s timer (0x1E84 duration units)
+    MOVLW 0x1E
+    MOVWF ?pa_timer_initialize+0
+    MOVLW 0x84
+    MOVWF ?pa_timer_initialize+1
+    FNCALL main,timer_initialize
+    CALL timer_initialize
+    CALL timer_start
+alarm_loop:
+    CALL timer_check
+    ANDLW 0x01
+    BTFSS ZERO
+    GOTO buzz_flip
+    GOTO alarm_loop_continue
+buzz_flip:
+    MOVLW 0x01
+    XORWF alarm_state,F
+    BTFSS ZERO
+    GOTO buzz_off
+buzz_on:
+    MOVLW SSDH_BUZZER
+    MOVWF aux_buffer
+    MOVLW SSDL_CH_0
+    MOVWF display_buffer+0
+    MOVWF display_buffer+1
+    MOVWF display_buffer+2
+    MOVWF display_buffer+3
+    GOTO alarm_loop_continue
+buzz_off:
+    MOVLW SSDH_COLON
+    MOVWF aux_buffer
+    CLRF display_buffer+0
+    CLRF display_buffer+1
+    CLRF display_buffer+2
+    CLRF display_buffer+3
+alarm_loop_continue:
+    CALL hardware_refresh
+    GOTO alarm_loop
 
 END resetVec
