@@ -44,7 +44,7 @@ GLOBAL timer_check
 timer_check:
     BTFSC TMR0IF
     GOTO tick
-    GOTO handle_no_timeout
+    RETLW 0
 tick:
     BCF TMR0IF
     INCF timer_counter_high,F
@@ -56,32 +56,16 @@ tick:
 
     INCF timer_duration+0,W
     XORWF timer_counter_high,W
-    BTFSC ZERO
-    GOTO handle_timeout
-
-    // Otherwise
-    GOTO handle_no_timeout
+    BTFSS ZERO
+    RETLW 0
+    CLRF timer_counter_high
+    RETLW 1
 
 last_run:
-    // 15,625 - 15,555 = 70 = number of timer ticks required on the last run
-    // 255-70 = 185 number of timer ticks needed to adjust TMR0 to account for
-    //          the last run
-    //
-    // Note that when TMR0 is written, its increment is inhibited for two
-    // instruction cycles. This is hopefully okay because there hasn't been
-    // 64 instruction cycles since the last interrupt.
-
-    MOVLW 0xFF                   ; W=0xFF-(timer_duration+1)
+    MOVLW 0xFF                   ; W=0xFF-*(timer_duration+1)
     MOVWF timer_initialize_tmp
     MOVF timer_duration+1,W
     SUBWF timer_initialize_tmp,W
 
     ADDWF TMR0,F
-    GOTO handle_no_timeout
-
-handle_timeout:
-    CLRF timer_counter_high
-    RETLW 1
-
-handle_no_timeout:
     RETLW 0
