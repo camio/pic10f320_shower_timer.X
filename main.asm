@@ -34,6 +34,8 @@ porta_last_state:
     DS 1
 porta_current_state:
     DS 1
+enable_buzzer:
+    DS 1
 
 // Amount of time left on the timer. The high-order byte is minutes in BCD and
 // the low-order byte is seconds in BCD
@@ -73,9 +75,9 @@ main:
     MOVF PORTA,W
     MOVWF porta_last_state
 
-    CLRF time_left
-    MOVLW 0x59
-    MOVWF time_left+1
+    MOVLW 0x05
+    MOVWF time_left
+    CLRF time_left+1
 
     MOVF time_left,W
     MOVWF ?pa_hardware_drawHex16+0
@@ -159,6 +161,9 @@ redraw_and_loop:
 alarm:
     CLRF alarm_state
 
+    MOVLW 0x01
+    MOVWF enable_buzzer
+
     // Start 0.5s timer (0x1E84 duration units)
     MOVLW 0x1E
     MOVWF ?pa_timer_initialize+0
@@ -168,6 +173,9 @@ alarm:
     CALL timer_initialize
     CALL timer_start
 alarm_loop:
+    BTFSS RA3
+    CLRF enable_buzzer
+
     CALL timer_check
     ANDLW 0x01
     BTFSS ZERO
@@ -180,6 +188,7 @@ buzz_flip:
     GOTO buzz_off
 buzz_on:
     MOVLW SSDH_BUZZER
+    BTFSC enable_buzzer,0
     MOVWF aux_buffer
     MOVLW SSDL_CH_0
     MOVWF display_buffer+0
