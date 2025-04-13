@@ -190,9 +190,9 @@ setOutput_for_each_bit:
 
 GLOBAL hardware_initialize
 hardware_initialize:
-    BCF TRIS_SER ; Set RA's 0-2 to output mode
-    BCF TRIS_RCLK
-    BCF TRIS_SRCLK
+    MOVLW 00001000B ; Set RA's 0-2 to output mode
+    MOVWF TRISA
+
     CLRF next_digit
     CLRF aux_buffer
     CLRF display_buffer

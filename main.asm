@@ -30,6 +30,11 @@ PSECT udata
 GLOBAL alarm_state
 alarm_state:
     DS 1
+porta_last_state:
+    DS 1
+porta_current_state:
+    DS 1
+
 // Amount of time left on the timer. The high-order byte is minutes in BCD and
 // the low-order byte is seconds in BCD
 GLOBAL time_left
@@ -40,14 +45,13 @@ PSECT code
 
 FNROOT main
 main:
-    BSF IRCF0 ; Set frequency to 4 Mhz
-    BCF IRCF1
-    BSF IRCF2
+    ; Default frequency, 4Mhz, is fine.
+    MOVLW 01010000B
+    MOVWF OSCCON
 
-    BSF PS0    ; Set prescaler to 1:64
-    BCF PS1
-    BSF PS2
-    BCF PSA    ; Enable prescaler
+    ; Set prescaler enabled to 1:64, weak pull-ups enabled, and interrupt on falling edge of INT piin
+    MOVLW 00000101B
+    MOVWF OPTION_REG
 
     FNCALL main,hardware_initialize
     CALL hardware_initialize
@@ -66,8 +70,11 @@ main:
 
     CALL timer_start
 
+    MOVF PORTA,W
+    MOVWF porta_last_state
+
     CLRF time_left
-    MOVLW 0x05
+    MOVLW 0x59
     MOVWF time_left+1
 
     MOVF time_left,W
@@ -78,11 +85,43 @@ main:
     CALL hardware_drawHex16
 
 loop:
+    BTFSS TMR0IF
+    GOTO end_button_check
+
+    ; check for button state change
+    MOVF PORTA,W
+    MOVWF porta_current_state
+
+    MOVF porta_last_state,W
+    XORWF porta_current_state,W
+    ANDLW 00001000
+    BTFSC ZERO
+    GOTO end_button_check
+
+    ; handle button state change
+    MOVF porta_current_state,W
+    MOVWF porta_last_state
+    BTFSS porta_last_state,3
+    GOTO add_more_time
+
+end_button_check:
+
     CALL timer_check
     ANDLW 0x01
     BTFSS ZERO
     GOTO decrement_clock
     GOTO redraw_and_loop
+
+add_more_time:
+    MOVLW 0x0F
+    ANDWF time_left,W
+    XORLW 0x09
+    MOVLW 0x01
+    BTFSC ZERO
+    MOVLW 0x07
+    ADDWF time_left,F
+    GOTO draw_hex
+
 decrement_clock:
     // time = time_mmss_dec(time)
     MOVF time_left,W
@@ -96,6 +135,7 @@ decrement_clock:
     MOVF ?pa_time_mmss_dec+1,W
     MOVWF time_left+1
 
+draw_hex:
     // hardware_drawHex16(number)
     MOVF time_left,W
     MOVWF ?pa_hardware_drawHex16+0
