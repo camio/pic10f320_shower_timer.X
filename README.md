@@ -1,6 +1,9 @@
 # PIC10F320 Shower Timer
 
-TODO: Describe the shower timer's purpose
+A simple shower timer which useful for a high-traffic bathrooms. The timer starts
+with 5 minutes and a button can be pressed to add more minutes. When the timer goes
+to zero, an alarm will go off which can be silenced by pressing the button. To
+restart the timer, reset the device.
 
 ## Build and Run
 
